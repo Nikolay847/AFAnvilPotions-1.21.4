@@ -3,6 +3,7 @@ package ru.anton_flame.afanvilpotions.listeners;
 import org.bukkit.Color;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -191,7 +192,7 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getInventory() instanceof AnvilInventory)) {
+        if (!(event.getInventory() instanceof AnvilInventory anvil)) {
             return;
         }
 
@@ -199,7 +200,26 @@ public class Listeners implements Listener {
             return;
         }
 
-        ItemStack result = ((AnvilInventory) event.getInventory()).getResult();
+        // Защита от дюпа через Shift+ПКМ и отмену операции из-за нехватки опыта.
+        // Нельзя забрать результат, если ванильная наковальня не разрешает операцию.
+        if (event.getWhoClicked() instanceof Player player) {
+            int cost = anvil.getRepairCost();
+
+            if (cost > 0 && player.getLevel() < cost) {
+                event.setCancelled(true);
+                event.getWhoClicked().updateInventory();
+                return;
+            }
+
+            // Не позволяем массовое получение результата через shift-клик.
+            if (event.isShiftClick()) {
+                event.setCancelled(true);
+                event.getWhoClicked().updateInventory();
+                return;
+            }
+        }
+
+        ItemStack result = anvil.getResult();
         if (result != null && remainingItems.containsKey(result)) {
             event.getWhoClicked().getInventory().addItem(remainingItems.remove(result));
         }
