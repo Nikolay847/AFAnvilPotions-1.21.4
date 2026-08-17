@@ -192,9 +192,11 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getInventory() instanceof AnvilInventory anvil)) {
+        if (!(event.getInventory() instanceof AnvilInventory)) {
             return;
         }
+
+        AnvilInventory anvil = (AnvilInventory) event.getInventory();
 
         if (event.getSlotType() != InventoryType.SlotType.RESULT) {
             return;
