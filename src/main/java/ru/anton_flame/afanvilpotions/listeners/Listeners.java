@@ -13,6 +13,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionType;
 import ru.anton_flame.afanvilpotions.utils.ConfigManager;
 import ru.anton_flame.afanvilpotions.utils.Hex;
 
@@ -44,6 +46,12 @@ public class Listeners implements Listener {
         PotionEffectType secondType = getEffectType(secondMeta);
 
         if (firstType == null || secondType == null || firstType != secondType) {
+            return;
+        }
+
+        // Максимальный уровень - III. После него результат в наковальне не показываем.
+        if (getEffectAmplifier(firstMeta) >= 2 || getEffectAmplifier(secondMeta) >= 2) {
+            event.setResult(null);
             return;
         }
 
@@ -90,9 +98,18 @@ public class Listeners implements Listener {
             ItemStack potionItem = firstItem.clone();
             PotionMeta potionMeta = (PotionMeta) potionItem.getItemMeta();
 
+            // Убираем старый базовый эффект и старые custom effects,
+            // чтобы не получалось Speed II + Speed III одновременно.
             potionMeta.clearCustomEffects();
+            potionMeta.setBasePotionData(new PotionData(PotionType.WATER));
+
+            PotionEffectType effectType = PotionEffectType.getByName(potion);
+            if (effectType == null) {
+                return;
+            }
+
             potionMeta.addCustomEffect(new PotionEffect(
-                    PotionEffectType.getByName(potion),
+                    effectType,
                     potions.getInt(potion + ".duration") * 20,
                     level
             ), true);
@@ -136,6 +153,24 @@ public class Listeners implements Listener {
 
     private boolean isUpgraded(PotionMeta meta) {
         return meta.getBasePotionData() != null && meta.getBasePotionData().isUpgraded();
+    }
+
+    private int getEffectAmplifier(PotionMeta meta) {
+        if (meta == null) {
+            return -1;
+        }
+
+        if (!meta.getCustomEffects().isEmpty()) {
+            return meta.getCustomEffects().get(0).getAmplifier();
+        }
+
+        if (meta.getBasePotionData() != null &&
+                meta.getBasePotionData().getType() != null) {
+
+            return meta.getBasePotionData().isUpgraded() ? 1 : 0;
+        }
+
+        return -1;
     }
 
     private PotionEffectType getEffectType(PotionMeta meta) {
