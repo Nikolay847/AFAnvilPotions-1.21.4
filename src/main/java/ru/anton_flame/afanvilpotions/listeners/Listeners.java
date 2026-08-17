@@ -209,14 +209,14 @@ public class Listeners implements Listener {
 
             if (cost > 0 && player.getLevel() < cost) {
                 event.setCancelled(true);
-                event.getWhoClicked().updateInventory();
+                player.updateInventory();
                 return;
             }
 
             // Не позволяем массовое получение результата через shift-клик.
             if (event.isShiftClick()) {
                 event.setCancelled(true);
-                event.getWhoClicked().updateInventory();
+                player.updateInventory();
                 return;
             }
         }
